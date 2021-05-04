@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import ast
 import difflib
 import gc
 import json
@@ -621,3 +622,16 @@ def test_pth_in_site_vs_PYTHONPATH(tmp_path):
         env=env,
     )
     assert out == "ok\n"
+
+
+def test_getsitepackages(tmp_path):
+    session = cli_run([ensure_text(str(tmp_path))])
+    env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
+    out = subprocess.check_output(
+        [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
+        universal_newlines=True,
+    )
+    site_packages = ast.literal_eval(out)
+
+    for env_site_package in env_site_packages:
+        assert env_site_package in site_packages
